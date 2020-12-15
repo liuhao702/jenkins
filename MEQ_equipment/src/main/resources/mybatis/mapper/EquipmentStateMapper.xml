@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="com.lc.bxm.equipment.dao.EquipmentStateMapper">
+
+
+   <!--  <insert id="add" parameterType="EquipmentState" useGeneratedKeys="true" keyProperty="sId" keyColumn="s_id">
+    insert into 
+     data_template (s_code, s_name, s_remarks, s_userid, s_equipmentid, comp_id)
+    values 
+      (#{s_code,jdbcType=VARCHAR}, #{s_name,jdbcType=VARCHAR}, #{s_remarks,jdbcType=TEXT}, 
+      #{s_userid,jdbcType=UUID}, #{s_equipmentid,jdbcType=INTEGER}, #{comp_id,jdbcType=INTEGER})
+    </insert> -->
+
+</mapper>   

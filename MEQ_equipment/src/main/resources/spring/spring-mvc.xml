@@ -1,0 +1,164 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd"
+		>
+	<mvc:annotation-driven />
+	<mvc:default-servlet-handler />
+
+	<context:annotation-config />
+	<!-- 自动扫描web包 ,将带有注解的类 纳入spring容器管理 -->
+	<context:component-scan
+		base-package="com.lc.bxm.*"></context:component-scan>
+    <bean id="testConn" class = "com.lc.bxm.entity.TestConnection"/>
+	<mvc:annotation-driven>
+		<mvc:message-converters>
+			<bean
+				class="org.springframework.http.converter.StringHttpMessageConverter">
+				<property name="supportedMediaTypes">
+					<list>
+						<value>application/json;charset=UTF-8</value>
+					</list>
+				</property>
+			</bean>
+		</mvc:message-converters>
+	</mvc:annotation-driven>
+
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- 允许文件上传的最大字节数，如果是多文件上传的话，表示的总文件的大小 10M=10*1024*1024(B)=10485760 bytes -->
+		<!-- <property name="maxUploadSize" value="10485760" /> -->
+		<property name="maxUploadSize" value="52428800" />
+		<!-- 文件默认的编码 -->
+		<property name="defaultEncoding" value="UTF-8" />
+	</bean>
+
+	<!-- 异常处理，当上传的文件超过multipartResolver中maxUploadSize的大小时，会抛出异常，并由这个处理器处理，返回到error_load页面 -->
+	<bean id="exceptionResolver"
+		class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		<property name="exceptionMappings">
+			<props>
+				<prop
+					key="org.springframework.web.multipart.MaxUploadSizeExceededException">error_load</prop>
+			</props>
+		</property>
+	</bean>
+
+	 <mvc:interceptors> 
+	  <mvc:interceptor> 
+		  <mvc:mapping path="/**/*" />       
+		   <!-- 静态文件不进行拦截 -->
+		<!--   <mvc:exclude-mapping path="/**/*.png" /> 
+		  <mvc:exclude-mapping path="/**/*.js" />
+		  <mvc:exclude-mapping path="/**/*.css" /> 
+		  <mvc:exclude-mapping path="/**/*.html" />
+		  <mvc:exclude-mapping path="/configuration/*"/> -->
+		  <!-- <mvc:exclude-mapping path="/**/swagger-ui.html/*" /> -->
+		  <bean class="com.lc.bxm.common.filter.TokenInterceptor">
+		  </bean> 
+	  </mvc:interceptor> 
+	</mvc:interceptors> 
+	
+	<bean class="com.lc.bxm.common.util.SwaggerConfig"/>
+    <mvc:resources mapping="/swagger/**" location="/swagger/"/>
+    <mvc:resources mapping="swagger-ui.html" location="classpath:/META-INF/resources/" />
+    <mvc:resources mapping="/webjars/**" location="classpath:/META-INF/resources/webjars/" />
+
+	<!-- 定时任务配置 -->
+	<task:executor id="excutor" pool-size="5" />
+	<task:scheduler id="scheduler" pool-size="10" />
+	<task:annotation-driven executor="excutor" scheduler="scheduler" />
+	
+	<!-- 配置整合mybatis过程 -->
+	<!-- 1.配置数据库相关参数properties的属性：${url} -->
+	<context:property-placeholder location="classpath:jdbc.properties" ignore-unresolvable="true"/>
+	
+	<!-- 2.数据库连接池 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		<!-- 配置连接池属性 -->
+		<property name="driverClass" value="${jdbc.driver}" />
+		<property name="jdbcUrl" value="${jdbc.url}" />
+		<property name="user" value="${jdbc.userName}" />
+		<property name="password" value="${jdbc.password}" />
+
+		<!-- c3p0连接池的私有属性 -->
+		<property name="maxPoolSize" value="30" />
+		<property name="minPoolSize" value="5" />
+		<!-- 关闭连接后不自动commit -->
+		<property name="autoCommitOnClose" value="false" />
+		<!-- 获取连接超时时间 -->
+		<property name="checkoutTimeout" value="10000" />
+		<!-- 当获取连接失败重试次数 -->
+		<property name="acquireRetryAttempts" value="2" />
+	</bean>
+
+	<!-- 3.配置SqlSessionFactory对象 -->
+	 <!-- <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"> -->
+	<bean id="sqlSessionFactory" class="com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean">
+		<!-- 注入数据库连接池 -->
+		<property name="dataSource" ref="dataSource" />
+		<!-- 配置MyBaties全局配置文件:mybatis-config.xml -->
+		<property name="configLocation" value="classpath:mybatis/mybatis.xml" />
+		<!-- 扫描entity包 使用别名 -->
+		<property name="typeAliasesPackage" value="com.lc.bxm.equipment.entity" />
+		<!-- 扫描sql配置文件:mapper需要的xml文件 -->
+		<property name="mapperLocations" value="classpath:mybatis/mapper/*.xml" />
+		
+	<!-- 	<property name="globalConfig" ref="globalConfig"></property> -->
+	
+	</bean>
+
+	<!-- 4.配置扫描Dao接口包，动态实现Dao接口，注入到spring容器中 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<!-- 注入sqlSessionFactory -->
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+		<!-- 给出需要扫描Dao接口包 -->
+		<property name="basePackage" value="com.lc.bxm.equipment.dao" />
+		
+	</bean>
+	
+	<!--  <bean id="mybatisPlusInterceptor" class="com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor">
+        <property name="innerInterceptors">
+            <list>
+                <ref bean="paginationInnerInterceptor"/>
+            </list>
+        </property>
+    </bean> -->
+
+    <!-- <bean id="paginationInnerInterceptor"
+          class="com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor">
+    </bean> -->
+
+  <!--   <bean id="countSqlParser"
+          class="com.baomidou.mybatisplus.extension.plugins.pagination.optimize.JsqlParserCountOptimize">
+        <property name="optimizeJoin" value="true"/>
+    </bean> -->
+
+<!--     <bean id="globalConfig" class="com.baomidou.mybatisplus.core.config.GlobalConfig">
+        <property name="dbConfig" ref="dbConfig"/>
+    </bean>
+
+    <bean id="dbConfig" class="com.baomidou.mybatisplus.core.config.GlobalConfig.DbConfig">
+        主键自增
+        <property name="idType" value="AUTO"></property>
+        表前缀
+        <property name="tablePrefix" value ="cyj_instrument_"></property>
+        <property name="keyGenerator" ref="keyGenerator"/>
+    </bean>
+
+    <bean id="keyGenerator" class="com.baomidou.mybatisplus.extension.incrementer.H2KeyGenerator"/> -->
+
+     
+    
+    <!-- 引入rabbitMQ配置 -->
+	<!-- <import resource="applicationContext-rabbit.xml"/> -->
+</beans>

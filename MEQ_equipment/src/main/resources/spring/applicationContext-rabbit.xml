@@ -1,0 +1,66 @@
+<!-- <beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/rabbit
+                           http://www.springframework.org/schema/rabbit/spring-rabbit.xsd">
+
+    自定义connectionFactory
+    <bean id="customFactory" class="com.rabbitmq.client.ConnectionFactory">
+        <property name="handshakeTimeout" value="${rabbit.timeout}"></property>
+    </bean>
+
+    连接connectionFactory
+    <rabbit:connection-factory  id="connectionFactory"
+                                host="${rabbit.host}"
+                                port="${rabbit.port}"
+                                username="${rabbit.username}"
+                                password="${rabbit.password}"
+                                channel-cache-size="${rabbit.cachesize}"
+                                virtual-host="${rabbit.vhost}"
+                                publisher-returns="true"
+                                 />
+                                 publisher-confirms="true"
+
+    当前producer中的exchange和queue会在rabbitmq服务器里自动生成
+    <rabbit:admin connection-factory="connectionFactory"/>
+    声明队列
+    <rabbit:queue durable="true" auto-delete="false" exclusive="false" name="${rabbit.queuename1}"/>
+    <rabbit:queue durable="true" auto-delete="false" exclusive="false" name="${rabbit.queuename2}"/>
+    <rabbit:queue durable="true" auto-delete="false" exclusive="false" name="${rabbit.queuename3}"/>
+    <rabbit:queue durable="true" auto-delete="false" exclusive="false" name="${rabbit.queuename4}"/>
+    <rabbit:queue durable="true" auto-delete="false" exclusive="false" name="${rabbit.queuename5}"/>
+     mq模板声明，message-converter意思是可以将object类型转化成json传输，也可以将json类型转成object
+    <rabbit:template id="amqpTemplate" connection-factory="connectionFactory"  message-converter="jsonMessageConverter" />
+    
+     消息是否成功发送到Exchange 的回调
+    <bean id="CallBackMQ" class="com.lc.bxm.cyjq.resources.rabbitMQ.CallBackMQ"></bean>
+    
+     消息从Exchange路由到队列的回调，注意这里只有路由失败的时候才会调此方法
+    <bean id="ReturnCall" class="com.lc.bxm.cyjq.resources.rabbitMQ.ReturnCall"></bean>
+    
+    定义rabbitmq模板,用于接收以及发送消息
+    定义direct交换器
+    <rabbit:direct-exchange name="WorkOrder.exchange" auto-delete="false" durable="true"  >
+        <rabbit:bindings>
+            <rabbit:binding queue="${rabbit.queuename1}" key="${rabbit.queuename1}" />
+            <rabbit:binding queue="${rabbit.queuename2}" key="${rabbit.queuename2}" />
+            <rabbit:binding queue="${rabbit.queuename3}" key="${rabbit.queuename3}" />
+            <rabbit:binding queue="${rabbit.queuename4}" key="${rabbit.queuename4}" />
+            <rabbit:binding queue="${rabbit.queuename5}" key="${rabbit.queuename5}" />
+        </rabbit:bindings>
+    </rabbit:direct-exchange>
+
+ spring rabbitmqTemplate声明
+    <rabbit:template id="rabbitTemplate"
+                     exchange="WorkOrder.exchange"
+                     connection-factory="connectionFactory"
+                     return-callback="ReturnCall"
+                     routing-key="${rabbit.queuename1},${rabbit.queuename2},${rabbit.queuename3},${rabbit.queuename4},${rabbit.queuename5}"
+                     mandatory="true"
+                     encoding="UTF-8" />
+                       routing-key="WorkOrder" 
+                       
+                      
+</beans> -->
